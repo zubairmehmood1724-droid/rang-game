@@ -1,0 +1,77 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+body{background:#0b6623;color:white;text-align:center;font-family:sans-serif}
+#hand,#table{display:flex;flex-wrap:wrap;justify-content:center;gap:6px;margin:10px}
+.card{background:white;color:black;padding:10px;border-radius:6px}
+</style>
+</head>
+<body>
+
+<h2>Rang Classic</h2>
+
+<div id="menu">
+<button onclick="c()">Create</button>
+<input id="r"><button onclick="j()">Join</button>
+</div>
+
+<div id="g" style="display:none">
+<h3 id="rid"></h3>
+<h4 id="hukum"></h4>
+<h4 id="score"></h4>
+<div id="table"></div>
+<div id="hand"></div>
+<h4 id="turn"></h4>
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+let s=io(),id="",me="";
+
+s.on("connect",()=>me=s.id);
+
+function c(){s.emit("createRoom")}
+function j(){id=document.getElementById("r").value;s.emit("join",id)}
+
+s.on("room",x=>{id=x;alert("Room:"+x)})
+
+s.on("start",r=>{
+document.getElementById("menu").style.display="none";
+document.getElementById("g").style.display="block";
+u(r);
+});
+
+s.on("update",r=>u(r));
+
+function u(r){
+document.getElementById("hukum").innerText="Hukum: "+r.hukum;
+document.getElementById("score").innerText="A:"+r.scores[0]+" B:"+r.scores[1];
+document.getElementById("turn").innerText=r.players[r.turn]===me?"Your Turn":"Wait";
+
+let h=document.getElementById("hand"),t=document.getElementById("table");
+h.innerHTML="";t.innerHTML="";
+
+if(r.hands[me]){
+r.hands[me].forEach(c=>{
+let d=document.createElement("div");
+d.className="card";
+d.innerText=c.value+c.suit;
+d.onclick=()=>s.emit("play",{id,card:c});
+h.appendChild(d);
+});
+}
+
+r.table.forEach(c=>{
+let d=document.createElement("div");
+d.className="card";
+d.innerText=c.card.value+c.card.suit;
+t.appendChild(d);
+});
+}
+</script>
+
+</body>
+</html>
